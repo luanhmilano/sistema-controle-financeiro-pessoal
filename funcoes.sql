@@ -170,7 +170,7 @@ END //
 
 DELIMITER ;
 
--- TRANSAÇÕES POR CATEGORIA
+-- TRANSAÇÕES POR CATEGORIA GERAL
 
 DELIMITER //
 
@@ -182,6 +182,49 @@ BEGIN
     FROM Transacao
     INNER JOIN Categoria ON Transacao.ID_Categoria = Categoria.ID
     GROUP BY Categoria.Tipo, Transacao.Tipo;
+END //
+
+DELIMITER ;
+
+-- TRANSAÇÕES POR CATEGORIA DE USUÁRIO
+
+DELIMITER //
+
+CREATE PROCEDURE RelatorioUsuario(
+    p_ID_Usuario INT
+)
+BEGIN
+    SELECT c.Tipo AS Nome_Categoria,
+           t.Tipo AS Tipo_Transacao,
+           SUM(t.Valor) AS Total,
+           CASE 
+               WHEN t.Tipo = 'Receita' THEN r.Nome
+               WHEN t.Tipo = 'Despesa' THEN d.Nome
+               ELSE '' 
+           END AS Nome_Transacao,
+           CASE 
+               WHEN t.Tipo = 'Receita' THEN r.Detalhes
+               WHEN t.Tipo = 'Despesa' THEN d.Detalhes
+               ELSE ''
+           END AS Detalhes_Transacao
+    FROM Transacao t
+    INNER JOIN Categoria c ON t.ID_Categoria = c.ID
+    INNER JOIN Conta co ON t.ID_Conta = co.ID
+    LEFT JOIN Receitas r ON t.ID_Receita = r.ID
+    LEFT JOIN Despesas d ON t.ID_Despesa = d.ID
+    WHERE co.ID_Usuario = p_ID_Usuario
+    GROUP BY c.Tipo, t.Tipo, Nome_Transacao, Detalhes_Transacao;
+END //
+
+DELIMITER ;
+
+-- RESETAR BANCO DE DADOS
+
+DELIMITER //
+
+CREATE PROCEDURE Resetar()
+BEGIN
+	DROP DATABASE mydb;
 END //
 
 DELIMITER ;
